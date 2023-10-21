@@ -1,7 +1,7 @@
+/* eslint-disable no-undef */
 /* eslint-disable no-unused-vars */
 import { AnimatePresence, motion } from "framer-motion";
 import { useSnapshot } from "valtio";
-
 import config from "../config/config";
 import state from "../store/index";
 import { download } from "../assets";
@@ -43,13 +43,42 @@ const Customizer = () => {
         />
 
       case "aipicker":
-        return <AIPicker/>
+        return <AIPicker
+          prompt={prompt}
+          setPrompt={setPrompt}
+          generatingImg={generatingImg}
+          handleSubmit={handleSubmit}
+        />
 
       default:
         return null
      }
   };
 
+  const handleSubmit = async(type) =>{
+    if(!prompt) return alert("");
+
+    setGeneratingImg(true);
+    try{
+      // Call Back End to generate Image
+      const response = await fetch("http://localhost:3001/api/03/dalle", {
+        method: "POST",
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body: JSON.stringify({prompt})
+      })
+
+      const data = await response.json();
+
+      handleDecals(type, `data:image/png;base64,${data.image}`);
+    }catch(error){
+      console.log(error);
+    }finally{
+      setGeneratingImg(false);
+      setActiveEditorTab("");
+    }
+  }
 
   const handleDecals = (type, result) =>{
     const decalType = DecalTypes[type];
@@ -70,11 +99,19 @@ const Customizer = () => {
       case "stylishShirt":
         state.isFullTexture = !activeFilterTab[tabName];
         break;
-      
+
       default:
         state.isLogoTexture = true;
         state.isFullTexture = false;
     }
+
+    // After setting the state, activeFilterTab is updated
+    setActiveFilterTab((prevState)=> {
+      return {
+        ...prevState,
+        [tabName]: !prevState[tabName]
+      }
+    })
   };
 
   const readFile = (type) => {
@@ -109,13 +146,15 @@ const Customizer = () => {
           </motion.div>
 
           <motion.div
+            style={{fontFamily:"Josefin Sans"}}
             className="absolute z-10 top-5 right-5"
             {...fadeAnimation}
           >
             <CustomButton
+              type={"filled"}
               title={"Go Back"}
               handleClick={()=> state.intro = true}
-              customStyles="w-fit px-4 py-2.5 font-bold text-sm bg-[#EFBD48] text-white"
+              customStyles="w-fit px-3 py-2 text-xs text-white hover:opacity-90 transition-opacity duration-200"
             />
           </motion.div>
 
@@ -125,8 +164,8 @@ const Customizer = () => {
                 key={tab.name}
                 tab={tab}
                 isFilterTab
-                isActiveTab=""
-                handleClick={()=> {}}
+                isActiveTab={activeFilterTab[tab.name]}
+                handleClick={()=> handleActiveFilterTab(tab.name)}
               />
             ))}
           </motion.div>
