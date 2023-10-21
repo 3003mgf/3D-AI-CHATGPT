@@ -61,7 +61,7 @@ const Customizer = () => {
     setGeneratingImg(true);
     try{
       // Call Back End to generate Image
-      const response = await fetch("http://localhost:3001/api/03/dalle", {
+      const response = await fetch("https://3d-ai-chatgpt-mgf.up.railway.app/api/03/dalle", {
         method: "POST",
         headers:{
           "Content-Type":"application/json"
